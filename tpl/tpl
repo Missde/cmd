@@ -3,22 +3,27 @@ FROM ../<filename>
 PARAMETER temperature 0.75
 PARAMETER top_p 0.6
 PARAMETER top_k 40
-PARAMETER repeat_penalty 1
+PARAMETER repeat_penalty 1.1
 PARAMETER min_p 0.05
-PARAMETER num_ctx 4096
+PARAMETER num_ctx 2048
 
-# …Ë÷√∂‘ª∞÷’÷π∑˚ - ≤ª…Ë÷√ª·µº÷¬∂‘ª∞Œﬁ∑®Ω· ¯
-PARAMETER stop "<£¸begin®xof®xsentence£¸>"
-PARAMETER stop "<£¸end®xof®xsentence£¸>"
-PARAMETER stop "<£¸User£¸>"
-PARAMETER stop "<£¸Assistant£¸>"
 
-# ƒ£∞Â
 TEMPLATE """{{- if .System }}{{ .System }}{{ end }}
 {{- range $i, $_ := .Messages }}
 {{- $last := eq (len (slice $.Messages $i)) 1}}
-{{- if eq .Role "user" }}<£¸User£¸>{{ .Content }}
-{{- else if eq .Role "assistant" }}<£¸Assistant£¸>{{ .Content }}{{- if not $last }}<£¸end®xof®xsentence£¸>{{- end }}
+{{- if eq .Role "user" }}<ÔΩúUserÔΩú>{{ .Content }}
+{{- else if eq .Role "assistant" }}<ÔΩúAssistantÔΩú>{{ .Content }}{{- if not $last }}<ÔΩúend‚ñÅof‚ñÅsentenceÔΩú>{{- end }}
 {{- end }}
-{{- if and $last (ne .Role "assistant") }}<£¸Assistant£¸>{{- end }}
+{{- if and $last (ne .Role "assistant") }}<ÔΩúAssistantÔΩú>{{- end }}
 {{- end }}"""
+
+
+PARAMETER stop <ÔΩúbegin‚ñÅof‚ñÅsentenceÔΩú>
+PARAMETER stop <ÔΩúend‚ñÅof‚ñÅsentenceÔΩú>
+PARAMETER stop <ÔΩúUserÔΩú>
+PARAMETER stop <ÔΩúAssistantÔΩú>
+
+LICENSE """
+<filename>
+<ctime>
+"""
