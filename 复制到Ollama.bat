@@ -1,93 +1,115 @@
 @echo off
-title °Ñµ±Ç°Ä¿Â¼µÄggufÎÄµµ¸´ÖÆµ½Ollama
+chcp 65001 > nul
+
+title æŠŠå½“å‰ç›®å½•çš„ggufæ–‡æ¡£å¤åˆ¶åˆ°Ollama
 color 3F
 
 setlocal enabledelayedexpansion
 
 :INPUT_FILE
 echo .
-set /p filename=.  Çë°ÑggufÎÄµµÍÏ·Å¹ıÀ´:
+set /p filename=.  è¯·æŠŠggufæ–‡æ¡£æ‹–æ”¾è¿‡æ¥:
 echo .
 
 set "input_path=%filename:"=%"
 
 if "!input_path:.gguf=!"=="%input_path%" (
-	goto INPUT_FILE
+    goto INPUT_FILE
 )
 
-
-
-rem ¼ì²éÊäÈëÊÇ·ñÎªÍêÕûÂ·¾¶£¬Èç¹ûÊÇÔòÌáÈ¡×îºóÒ»²ãÄ¿Â¼Ãû
+rem æ£€æŸ¥è¾“å…¥æ˜¯å¦ä¸ºå®Œæ•´è·¯å¾„ï¼Œå¦‚æœæ˜¯åˆ™æå–æœ€åä¸€å±‚ç›®å½•å
 for %%i in ("%input_path%") do (
-    set "filename=%%~nxi"
+    set "name=%%~ni"
 )
+
+
 set "inputFile=tpl\tpl"
-set "outputFile=tpl\%filename:.gguf=%.txt"
-set "gguf=%outputFile%"
+set "outputFile=tpl\%name:.gguf=%.txt"
 
-set "filter=_KM _SS _L _0 _S _K _M .txt tpl\"
-for %%a in (%filter%) do (
-    set "gguf=!gguf:%%a=!"
+rem æ ¸å¿ƒå¤„ç†é€»è¾‘ï¼šå®šä½æœ€åä¸€ä¸ª[-.]å¹¶æ›¿æ¢
+set "last_pos=-1"
+
+rem é€†å‘éå†å­—ç¬¦ä¸²ï¼ˆä»æœ«å°¾å¼€å§‹ï¼‰
+:reverse_loop
+set "char=!name:~%last_pos%,1!"
+if "!char!" neq "" (
+    if "!char!" == "-" set "split_char=-" & goto replace_char
+    if "!char!" == "." set "split_char=." & goto replace_char
+    set /a last_pos-=1
+    goto reverse_loop
 )
 
-set "replace=-Q .Q"
-for %%b in (%replace%) do (
-    set "gguf=!gguf:%%b=:Q!"
-)
+:replace_char
+rem æ‰§è¡Œæ›¿æ¢æ“ä½œ
+set "front_part=!name:~0,%last_pos%!"
+set /a last_pos+=1
+set "end_part=!name:~%last_pos%!"
+set "gguf=!front_part!:!end_part!"
+
+rem set "filter=_KM _SS _L _0 _S _K _M .txt tpl\"
+rem for %%a in (%filter%) do set "gguf=!gguf:%%a=!"
 
 
 if exist "%outputFile%" (
     del %outputFile%
 )
 
-rem ÖğĞĞ¶ÁÈ¡ÊäÈëÎÄµµ£¬Ìæ»»²¢Ğ´ÈëÊä³öÎÄµµ
+
+
+set ctime=%date% %time%
+
+rem é€è¡Œè¯»å–è¾“å…¥æ–‡æ¡£ï¼Œæ›¿æ¢å¹¶å†™å…¥è¾“å‡ºæ–‡æ¡£
 for /f "tokens=1,* delims=]" %%a in ('find /n /v "" ^< "%inputFile%"') do (
     set "line=%%b"
     if not defined line (
-        rem Èç¹ûÊÇ¿ÕĞĞ£¬Ö±½ÓĞ´Èë¿ÕĞĞ
+        rem å¦‚æœæ˜¯ç©ºè¡Œï¼Œç›´æ¥å†™å…¥ç©ºè¡Œ
         echo.>>"%outputFile%"
     ) else (
-        rem Ìæ»»Õ¼Î»·û <filename> ÎªÊµ¼ÊÎÄµµÃû
-        set "line=!line:<filename>=%filename%!"
+        rem æ›¿æ¢å ä½ç¬¦ <filename> ä¸ºå®é™…æ–‡æ¡£å
+        set "line=!line:<filename>=%name%.gguf!"
+        set "line=!line:<ctime>=%ctime%!"
         echo !line!>>"%outputFile%"
     )
 )
-    echo .
-    echo .  Éú³ÉÄ£°åÎÄµµ %outputFile%
 
-rem ¼ì²éÄ£ĞÍÊÇ·ñ´æÔÚ
+
+echo .
+echo .  ç”Ÿæˆæ¨¡æ¿æ–‡æ¡£ %outputFile%
+
+rem æ£€æŸ¥æ¨¡å‹æ˜¯å¦å­˜åœ¨
 set "modelExists=0"
 for /f "delims=" %%a in ('ollama list ^| findstr /i /c:"%gguf%"') do (
     set "modelExists=1"
 )
 
-
 if "%modelExists%"=="1" (
     echo .
-    echo .  Ä£ĞÍ %gguf% ÒÑ´æÔÚ£¬ÕıÔÚÉ¾³ı
+    echo .  æ¨¡å‹ %gguf% å·²å­˜åœ¨ï¼Œæ­£åœ¨åˆ é™¤
     ollama stop %gguf%
     ollama rm %gguf%
 )
 
 echo .
-echo .  ÏÖÔÚ¸´ÖÆ %gguf% µ½Ollama
+echo .  ç°åœ¨å¤åˆ¶ %gguf% åˆ°Ollama
 echo .
-for /f "delims=" %%a in ('ollama create %gguf% -f %outputFile% 2^>^&1') do (
-    set "output=%%a"
-    echo !output!
-    rem ¼ì²éÊä³öÊÇ·ñ°üº¬ Error
-    echo !output! | findstr /i "Error" >nul
-    if not errorlevel 1 (
-        set "errorDetected=1"
-    )
-)
-echo .
-if "%errorDetected%"=="1" (
-    echo .  ²Ù×÷Ê§°Ü
-    color 4F
-) else (
-    echo .  ¸´ÖÆÍê³É
-)
+ollama create %gguf% -f %outputFile%
+
+@REM for /f "delims=" %%a in ('ollama create %gguf% -f %outputFile% 2^>^&1') do (
+@REM     set "output=%%a"
+@REM     echo !output!
+@REM     rem æ£€æŸ¥è¾“å‡ºæ˜¯å¦åŒ…å« Error
+@REM     echo !output! | findstr /i "Error" >nul
+@REM     if not errorlevel 1 (
+@REM         set "errorDetected=1"
+@REM     )
+@REM )
+@REM echo .
+@REM if "%errorDetected%"=="1" (
+@REM     echo .  æ“ä½œå¤±è´¥
+@REM     color 4F
+@REM ) else (
+@REM     echo .  å¤åˆ¶å®Œæˆ
+@REM )
 
 echo .
 endlocal
